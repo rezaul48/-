@@ -1,0 +1,7 @@
+{
+  "name": "Hazira Pro & AI Studio",
+  "description": "A comprehensive Employee Attendance System with Dashboard, Reports, Payroll, and AI-powered Image Editing features using Gemini 2.5 Flash.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

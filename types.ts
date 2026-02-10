@@ -1,0 +1,113 @@
+export type Language = 'en' | 'bn';
+
+export interface Employee {
+  id: string;
+  name: string;
+  address: string;
+  mobile: string;
+  salary: number; // Monthly salary
+  avatar?: string;
+}
+
+export type AttendanceStatus = 'Present' | 'Absent' | 'Leave' | 'Late';
+
+export interface AttendanceRecord {
+  id: string;
+  employeeId: string;
+  date: string; // ISO Date string YYYY-MM-DD
+  status: AttendanceStatus;
+  checkInTime?: string;
+}
+
+export interface CompanyInfo {
+  name: string;
+  ownerName: string;
+  ownerPhoto: string;
+}
+
+export interface AppState {
+  employees: Employee[];
+  attendance: AttendanceRecord[];
+  company: CompanyInfo;
+  darkMode: boolean;
+  language: Language;
+}
+
+export const TRANSLATIONS = {
+  en: {
+    dashboard: 'Dashboard',
+    attendance: 'Attendance',
+    reports: 'Reports',
+    employees: 'Employees',
+    accounts: 'Accounts',
+    profile: 'Profile',
+    aiStudio: 'AI Studio',
+    totalEmployees: 'Total Employees',
+    totalPresent: 'Total Present',
+    totalAbsent: 'Total Absent',
+    totalLeave: 'Total Leave',
+    salaryExpense: 'Est. Salary Expense',
+    companyName: 'Company Name',
+    save: 'Save',
+    addEmployee: 'Add Employee',
+    name: 'Name',
+    address: 'Address',
+    mobile: 'Mobile',
+    salary: 'Salary',
+    actions: 'Actions',
+    status: 'Status',
+    date: 'Date',
+    generatePaySlip: 'Generate Pay Slip',
+    dailyIncome: 'Daily Income',
+    weeklyIncome: 'Weekly Income',
+    monthlyIncome: 'Monthly Income',
+    settings: 'Settings',
+    darkMode: 'Dark Mode',
+    language: 'Language',
+    editImage: 'Edit Image with AI',
+    imagePromptPlaceholder: 'e.g., Add a retro filter, remove background...',
+    generate: 'Generate',
+    uploadImage: 'Upload Image',
+    result: 'Result',
+    processing: 'Processing...',
+    downloadReport: 'Download CSV',
+  },
+  bn: {
+    dashboard: 'ড্যাশবোর্ড',
+    attendance: 'হাজিরা',
+    reports: 'রিপোর্ট',
+    employees: 'কর্মচারী তালিকা',
+    accounts: 'একাউন্ট',
+    profile: 'প্রোফাইল',
+    aiStudio: 'এআই স্টুডিও',
+    totalEmployees: 'মোট কর্মচারী',
+    totalPresent: 'মোট উপস্থিতি',
+    totalAbsent: 'মোট অনুপস্থিতি',
+    totalLeave: 'মোট ছুটি',
+    salaryExpense: 'মোট উপস্থিতির বেতন',
+    companyName: 'কোম্পানির নাম',
+    save: 'সেভ করুন',
+    addEmployee: 'কর্মচারী যোগ করুন',
+    name: 'নাম',
+    address: 'ঠিকানা',
+    mobile: 'মোবাইল',
+    salary: 'বেতন',
+    actions: 'অ্যাকশন',
+    status: 'স্ট্যাটাস',
+    date: 'তারিখ',
+    generatePaySlip: 'পে স্লিপ তৈরি করুন',
+    dailyIncome: 'দৈনিক আয়',
+    weeklyIncome: 'সাপ্তাহিক আয়',
+    monthlyIncome: 'মাসিক আয়',
+    settings: 'সেটিংস',
+    darkMode: 'ডার্ক মোড',
+    language: 'ভাষা',
+    editImage: 'এআই দিয়ে ছবি এডিট করুন',
+    imagePromptPlaceholder: 'যেমন: একটি রেট্রো ফিল্টার যোগ করুন...',
+    generate: 'তৈরি করুন',
+    uploadImage: 'ছবি আপলোড',
+    result: 'ফলাফল',
+    processing: 'প্রসেসিং হচ্ছে...',
+    downloadReport: 'রিপোর্ট ডাউনলোড',
+  }
+};
