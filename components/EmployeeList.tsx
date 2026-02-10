@@ -1,21 +1,24 @@
 import React, { useState } from 'react';
 import { Employee, TRANSLATIONS } from '../types';
-import { UserPlus, Trash2, Search, Phone, MapPin, DollarSign, AlertTriangle, X } from 'lucide-react';
+import { UserPlus, Trash2, Search, Phone, MapPin, DollarSign, AlertTriangle, X, Fingerprint, Edit2 } from 'lucide-react';
 
 interface EmployeeListProps {
   employees: Employee[];
   onAddEmployee: (emp: Employee) => void;
+  onUpdateEmployee: (originalId: string, emp: Employee) => void;
   onRemoveEmployee: (id: string) => void;
   lang: 'en' | 'bn';
 }
 
-const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onAddEmployee, onRemoveEmployee, lang }) => {
+const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onAddEmployee, onUpdateEmployee, onRemoveEmployee, lang }) => {
   const t = TRANSLATIONS[lang];
   const [showForm, setShowForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [employeeToDelete, setEmployeeToDelete] = useState<string | null>(null);
+  const [editingEmployeeId, setEditingEmployeeId] = useState<string | null>(null);
   
   // Form State
+  const [customId, setCustomId] = useState('');
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [mobile, setMobile] = useState('');
@@ -25,21 +28,63 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onAddEmployee, o
     return Math.floor(1000 + Math.random() * 9000).toString();
   };
 
+  const resetForm = () => {
+    setName('');
+    setAddress('');
+    setMobile('');
+    setSalary('');
+    setCustomId('');
+    setEditingEmployeeId(null);
+    setShowForm(false);
+  };
+
+  const handleToggleForm = () => {
+    if (!showForm) {
+      // Opening form in "Add" mode
+      setEditingEmployeeId(null);
+      setCustomId(generateId());
+      setName('');
+      setAddress('');
+      setMobile('');
+      setSalary('');
+    }
+    setShowForm(!showForm);
+  };
+
+  const handleEdit = (emp: Employee) => {
+    setEditingEmployeeId(emp.id);
+    setCustomId(emp.id);
+    setName(emp.name);
+    setAddress(emp.address);
+    setMobile(emp.mobile);
+    setSalary(emp.salary.toString());
+    setShowForm(true);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if ID already exists (excluding the current employee if we are editing)
+    if (employees.some(e => e.id === customId && e.id !== editingEmployeeId)) {
+        alert(lang === 'bn' ? 'এই আইডি ইতিমধ্যে ব্যবহৃত হয়েছে!' : 'This ID is already in use!');
+        return;
+    }
+
     const newEmployee: Employee = {
-      id: generateId(),
+      id: customId || generateId(),
       name,
       address,
       mobile,
       salary: Number(salary) || 0,
     };
-    onAddEmployee(newEmployee);
-    setName('');
-    setAddress('');
-    setMobile('');
-    setSalary('');
-    setShowForm(false);
+
+    if (editingEmployeeId) {
+      onUpdateEmployee(editingEmployeeId, newEmployee);
+    } else {
+      onAddEmployee(newEmployee);
+    }
+    
+    resetForm();
   };
 
   const handleDeleteConfirm = () => {
@@ -107,7 +152,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onAddEmployee, o
             </div>
             
             <button 
-              onClick={() => setShowForm(!showForm)}
+              onClick={handleToggleForm}
               className="w-full sm:w-auto px-6 py-2 bg-secondary hover:bg-green-600 text-white rounded-lg font-medium transition flex items-center justify-center gap-2"
             >
               <UserPlus size={18} />
@@ -119,15 +164,34 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onAddEmployee, o
       {showForm && (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-primary/20 animate-fade-in relative">
           <button 
-             onClick={() => setShowForm(false)} 
+             onClick={resetForm} 
              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
           >
              <X size={20} />
           </button>
+          <div className="mb-4">
+             <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
+               {editingEmployeeId ? <Edit2 size={20} className="text-primary"/> : <UserPlus size={20} className="text-secondary"/>}
+               {editingEmployeeId ? t.updateEmployee : t.addEmployee}
+             </h3>
+          </div>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t.name}</label>
               <input required value={name} onChange={e => setName(e.target.value)} className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none text-gray-800 dark:text-white" placeholder="e.g. Rahim Uddin" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t.id || 'ID'}</label>
+              <div className="relative">
+                <Fingerprint className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <input 
+                    required 
+                    value={customId} 
+                    onChange={e => setCustomId(e.target.value)} 
+                    className="w-full pl-10 pr-3 py-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none text-gray-800 dark:text-white font-mono" 
+                    placeholder="1001" 
+                />
+              </div>
             </div>
              <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t.mobile}</label>
@@ -142,7 +206,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onAddEmployee, o
               <input required type="number" value={salary} onChange={e => setSalary(e.target.value)} className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none text-gray-800 dark:text-white" placeholder="15000" />
             </div>
             <div className="md:col-span-2 flex justify-end gap-3 mt-2">
-              <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 font-medium">Cancel</button>
+              <button type="button" onClick={resetForm} className="px-4 py-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 font-medium">{t.cancel}</button>
               <button type="submit" className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-blue-600 transition font-medium">{t.save}</button>
             </div>
           </form>
@@ -152,13 +216,22 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onAddEmployee, o
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredEmployees.map(emp => (
           <div key={emp.id} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition relative group">
-            <button 
-              onClick={() => setEmployeeToDelete(emp.id)}
-              className="absolute top-4 right-4 text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition"
-              title={t.delete}
-            >
-              <Trash2 size={18} />
-            </button>
+            <div className="absolute top-4 right-4 flex items-center gap-2">
+                <button 
+                  onClick={() => handleEdit(emp)}
+                  className="text-gray-300 hover:text-primary transition p-1"
+                  title={t.edit}
+                >
+                  <Edit2 size={18} />
+                </button>
+                <button 
+                  onClick={() => setEmployeeToDelete(emp.id)}
+                  className="text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition p-1"
+                  title={t.delete}
+                >
+                  <Trash2 size={18} />
+                </button>
+            </div>
             
             <div className="flex items-center gap-4 mb-4">
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-blue-500/20 shadow-lg">

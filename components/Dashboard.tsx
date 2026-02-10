@@ -25,13 +25,16 @@ const Dashboard: React.FC<DashboardProps> = ({ state, onUpdateCompanyName, lang 
 
   const totalEmployees = state.employees.length;
   const presentCount = todayAttendance.filter(a => a.status === 'Present').length;
-  const absentCount = todayAttendance.filter(a => a.status === 'Absent').length;
   const leaveCount = todayAttendance.filter(a => a.status === 'Leave').length;
   // Assuming "Late" is technically present but marked differently. 
   const lateCount = todayAttendance.filter(a => a.status === 'Late').length;
   
   // Total effectively present for salary calculation stats
   const totalPresentEffectively = presentCount + lateCount; 
+
+  // Updated Absent Calculation: 
+  // Everyone is considered Absent by default until they are marked as Present, Late, or Leave.
+  const absentCount = Math.max(0, totalEmployees - (totalPresentEffectively + leaveCount));
   
   // Estimate daily salary expense for *today* based on attendance
   // Simple logic: Sum of (Daily Salary) for all Present/Late employees.

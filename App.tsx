@@ -101,6 +101,33 @@ const App: React.FC = () => {
     setState(prev => ({ ...prev, employees: [...prev.employees, emp] }));
   };
 
+  const handleUpdateEmployee = (originalId: string, updatedEmp: Employee) => {
+    setState(prev => {
+      const idChanged = originalId !== updatedEmp.id;
+      
+      // Update employees list
+      const updatedEmployees = prev.employees.map(emp => 
+        emp.id === originalId ? updatedEmp : emp
+      );
+
+      // Update attendance records if ID changed
+      let updatedAttendance = prev.attendance;
+      if (idChanged) {
+        updatedAttendance = prev.attendance.map(record => 
+          record.employeeId === originalId 
+            ? { ...record, employeeId: updatedEmp.id, id: record.id.replace(originalId, updatedEmp.id) }
+            : record
+        );
+      }
+
+      return {
+        ...prev,
+        employees: updatedEmployees,
+        attendance: updatedAttendance
+      };
+    });
+  };
+
   const handleRemoveEmployee = (id: string) => {
     setState(prev => ({
       ...prev,
@@ -141,7 +168,13 @@ const App: React.FC = () => {
       case 'reports':
         return <Reports employees={state.employees} attendance={state.attendance} lang={state.language} />;
       case 'employees':
-        return <EmployeeList employees={state.employees} onAddEmployee={handleAddEmployee} onRemoveEmployee={handleRemoveEmployee} lang={state.language} />;
+        return <EmployeeList 
+                  employees={state.employees} 
+                  onAddEmployee={handleAddEmployee} 
+                  onUpdateEmployee={handleUpdateEmployee}
+                  onRemoveEmployee={handleRemoveEmployee} 
+                  lang={state.language} 
+                />;
       case 'accounts':
         return <Accounts employees={state.employees} attendance={state.attendance} lang={state.language} />;
       case 'aiStudio':
