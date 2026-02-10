@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Employee, TRANSLATIONS } from '../types';
-import { UserPlus, Trash2, Search, Phone, MapPin, DollarSign, AlertTriangle, X, Fingerprint, Edit2, Camera, Upload } from 'lucide-react';
+import { UserPlus, Trash2, Search, Phone, MapPin, DollarSign, AlertTriangle, X, Fingerprint, Edit2, Camera, Upload, Users } from 'lucide-react';
 
 interface EmployeeListProps {
   employees: Employee[];
@@ -150,8 +150,11 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onAddEmployee, o
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
          <div className="flex items-center gap-2 w-full md:w-auto">
             <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
-              <UserPlus className="text-primary" />
+              <Users className="text-primary" />
               {t.employees}
+              <span className="ml-2 text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 px-3 py-1 rounded-full shadow-sm">
+                {employees.length}
+              </span>
             </h2>
          </div>
          

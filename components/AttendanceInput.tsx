@@ -119,9 +119,18 @@ const AttendanceInput: React.FC<AttendanceInputProps> = ({ employees, attendance
                 {/* Top Line: Name and ID */}
                 <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-100 dark:border-gray-700">
                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold text-sm">
-                         {emp.name.substring(0,2).toUpperCase()}
-                      </div>
+                      {emp.avatar ? (
+                        <img 
+                          src={emp.avatar} 
+                          alt={emp.name} 
+                          className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-600"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold text-sm">
+                           {emp.name.substring(0,2).toUpperCase()}
+                        </div>
+                      )}
+                      
                       <div>
                          <h3 className="font-bold text-gray-800 dark:text-white text-lg">{emp.name}</h3>
                          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 font-mono">

@@ -75,7 +75,8 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
       totalOvertimeHours,
       salary: emp.salary,
       name: emp.name,
-      id: emp.id
+      id: emp.id,
+      avatar: emp.avatar
     };
   };
 
@@ -179,10 +180,19 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
                  <button
                    key={emp.id}
                    onClick={() => setSelectedEmp(emp.id)}
-                   className={`w-full text-left p-3 rounded-lg transition flex items-center justify-between ${selectedEmp === emp.id ? 'bg-primary text-white shadow-md' : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/30'}`}
+                   className={`w-full text-left p-3 rounded-lg transition flex items-center gap-3 ${selectedEmp === emp.id ? 'bg-primary text-white shadow-md' : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/30'}`}
                  >
-                   <span className="font-medium">{emp.name}</span>
-                   <span className="text-xs opacity-70">#{emp.id}</span>
+                   {emp.avatar ? (
+                     <img src={emp.avatar} alt="" className="w-8 h-8 rounded-full object-cover border border-white/20" />
+                   ) : (
+                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${selectedEmp === emp.id ? 'bg-white/20 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300'}`}>
+                       {emp.name.substring(0,2).toUpperCase()}
+                     </div>
+                   )}
+                   <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{emp.name}</p>
+                      <p className="text-xs opacity-70">#{emp.id}</p>
+                   </div>
                  </button>
                ))
              ) : (
@@ -233,15 +243,24 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
                    </div>
                  </div>
 
-                 <div className="grid grid-cols-2 gap-8 mb-8">
-                   <div>
-                     <p className="text-xs text-gray-400 uppercase font-semibold">Employee Details</p>
-                     <p className="font-bold text-lg text-gray-800 dark:text-white mt-1">{stats.name}</p>
-                     <p className="text-sm text-gray-600 dark:text-gray-400">ID: {stats.id}</p>
-                   </div>
-                   <div className="text-right">
-                     <p className="text-xs text-gray-400 uppercase font-semibold">{t.paymentPeriod}</p>
-                     <p className="font-bold text-lg text-gray-800 dark:text-white mt-1">{startDate} <span className="text-sm text-gray-400">to</span> {endDate}</p>
+                 <div className="flex gap-6 mb-8 items-start">
+                   {stats.avatar && (
+                     <img 
+                        src={stats.avatar} 
+                        alt="Employee" 
+                        className="w-20 h-20 rounded-md object-cover border-2 border-gray-200 dark:border-gray-600"
+                     />
+                   )}
+                   <div className="flex-1 grid grid-cols-2 gap-8">
+                     <div>
+                       <p className="text-xs text-gray-400 uppercase font-semibold">Employee Details</p>
+                       <p className="font-bold text-lg text-gray-800 dark:text-white mt-1">{stats.name}</p>
+                       <p className="text-sm text-gray-600 dark:text-gray-400">ID: {stats.id}</p>
+                     </div>
+                     <div className="text-right">
+                       <p className="text-xs text-gray-400 uppercase font-semibold">{t.paymentPeriod}</p>
+                       <p className="font-bold text-lg text-gray-800 dark:text-white mt-1">{startDate} <span className="text-sm text-gray-400">to</span> {endDate}</p>
+                     </div>
                    </div>
                  </div>
 
