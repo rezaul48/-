@@ -71,6 +71,9 @@ export const TRANSLATIONS = {
     result: 'Result',
     processing: 'Processing...',
     downloadReport: 'Download CSV',
+    searchByName: 'Search by Name...',
+    searchByID: 'Search by ID...',
+    noRecords: 'No attendance records found for this criteria.',
   },
   bn: {
     dashboard: 'ড্যাশবোর্ড',
@@ -109,5 +112,8 @@ export const TRANSLATIONS = {
     result: 'ফলাফল',
     processing: 'প্রসেসিং হচ্ছে...',
     downloadReport: 'রিপোর্ট ডাউনলোড',
+    searchByName: 'নাম দিয়ে খুঁজুন...',
+    searchByID: 'আইডি দিয়ে খুঁজুন...',
+    noRecords: 'এই তথ্যের সাথে কোনো হাজিরার রেকর্ড পাওয়া যায়নি।',
   }
 };
