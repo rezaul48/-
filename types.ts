@@ -80,6 +80,12 @@ export const TRANSLATIONS = {
     overtimeRate: 'OT Rate',
     overtimePay: 'Overtime Pay',
     totalOvertime: 'Total Overtime',
+    editProfile: 'Edit Profile',
+    ownerName: 'Owner Name',
+    ownerPhotoUrl: 'Owner Photo',
+    uploadPhoto: 'Upload Photo',
+    cancel: 'Cancel',
+    saveChanges: 'Save Changes',
   },
   bn: {
     dashboard: 'ড্যাশবোর্ড',
@@ -126,5 +132,11 @@ export const TRANSLATIONS = {
     overtimeRate: 'ওভারটাইম রেট',
     overtimePay: 'ওভারটাইম টাকা',
     totalOvertime: 'মোট ওভারটাইম',
+    editProfile: 'প্রোফাইল এডিট করুন',
+    ownerName: 'মালিকের নাম',
+    ownerPhotoUrl: 'মালিকের ছবি',
+    uploadPhoto: 'ছবি আপলোড করুন',
+    cancel: 'বাতিল',
+    saveChanges: 'পরিবর্তন সেভ করুন',
   }
 };

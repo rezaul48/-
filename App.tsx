@@ -21,7 +21,7 @@ import Profile from './components/Profile';
 import ImageEditor from './components/ImageEditor';
 
 // Types and Data
-import { AppState, AttendanceRecord, Employee, TRANSLATIONS } from './types';
+import { AppState, AttendanceRecord, Employee, TRANSLATIONS, CompanyInfo } from './types';
 
 // Mock Initial Data
 const INITIAL_EMPLOYEES: Employee[] = [
@@ -62,6 +62,10 @@ const App: React.FC = () => {
   
   const handleUpdateCompanyName = (name: string) => {
     setState(prev => ({ ...prev, company: { ...prev.company, name } }));
+  };
+
+  const handleUpdateCompany = (company: CompanyInfo) => {
+    setState(prev => ({ ...prev, company }));
   };
 
   const handleAddEmployee = (emp: Employee) => {
@@ -114,7 +118,7 @@ const App: React.FC = () => {
       case 'aiStudio':
         return <ImageEditor lang={state.language} />;
       case 'profile':
-        return <Profile state={state} toggleDarkMode={toggleDarkMode} toggleLanguage={toggleLanguage} />;
+        return <Profile state={state} toggleDarkMode={toggleDarkMode} toggleLanguage={toggleLanguage} onUpdateCompany={handleUpdateCompany} />;
       default:
         return <Dashboard state={state} onUpdateCompanyName={handleUpdateCompanyName} lang={state.language} />;
     }
