@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Employee, AttendanceRecord, TRANSLATIONS } from '../types';
-import { DollarSign, Printer, Calculator, Clock } from 'lucide-react';
+import { DollarSign, Printer, Calculator, Clock, Download, Loader2 } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 interface AccountsProps {
   employees: Employee[];
@@ -11,6 +13,7 @@ interface AccountsProps {
 const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
   const t = TRANSLATIONS[lang];
   const [selectedEmp, setSelectedEmp] = useState<string>(employees[0]?.id || '');
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const calculateStats = (empId: string) => {
     const emp = employees.find(e => e.id === empId);
@@ -51,6 +54,33 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
       name: emp.name,
       id: emp.id
     };
+  };
+
+  const handleDownloadPDF = async () => {
+    const element = document.getElementById('payslip');
+    if (!element || !stats) return;
+
+    setIsGeneratingPdf(true);
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2, // Higher scale for better resolution
+        useCORS: true, // Handle cross-origin images like avatars
+        backgroundColor: document.documentElement.classList.contains('dark') ? '#1f2937' : '#ffffff',
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Payslip_${stats.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsGeneratingPdf(false);
+    }
   };
 
   const stats = selectedEmp ? calculateStats(selectedEmp) : null;
@@ -173,8 +203,20 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
                     </div>
                  </div>
 
-                 <div className="mt-8 flex justify-end print:hidden">
-                    <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded hover:bg-black transition">
+                 {/* Action Buttons - Hidden in PDF via data-html2canvas-ignore */}
+                 <div className="mt-8 flex justify-end gap-3 print:hidden" data-html2canvas-ignore>
+                    <button 
+                      onClick={handleDownloadPDF} 
+                      disabled={isGeneratingPdf}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition disabled:bg-blue-400"
+                    >
+                       {isGeneratingPdf ? <Loader2 size={16} className="animate-spin"/> : <Download size={16} />}
+                       {t.downloadPDF}
+                    </button>
+                    <button 
+                      onClick={() => window.print()} 
+                      className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded hover:bg-black transition"
+                    >
                        <Printer size={16} /> Print Slip
                     </button>
                  </div>

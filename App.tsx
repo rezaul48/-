@@ -23,30 +23,59 @@ import ImageEditor from './components/ImageEditor';
 // Types and Data
 import { AppState, AttendanceRecord, Employee, TRANSLATIONS, CompanyInfo } from './types';
 
-// Mock Initial Data
+// Mock Initial Data (Used only if no local storage data exists)
 const INITIAL_EMPLOYEES: Employee[] = [
   { id: '1001', name: 'Abdul Karim', address: 'Mirpur, Dhaka', mobile: '01711223344', salary: 15000 },
   { id: '1002', name: 'Nasrin Akter', address: 'Uttara, Dhaka', mobile: '01911223344', salary: 18000 },
   { id: '1003', name: 'Kamal Hossain', address: 'Savar, Dhaka', mobile: '01811223344', salary: 12000 },
 ];
 
+const STORAGE_KEY = 'hazira-pro-data-v1';
+
 const App: React.FC = () => {
   // --- STATE MANAGEMENT ---
   const [activeTab, setActiveTab] = useState('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [state, setState] = useState<AppState>({
-    employees: INITIAL_EMPLOYEES,
-    attendance: [],
-    company: {
-      name: 'Alpha Tech Solutions',
-      ownerName: 'Md. Owner Rahman',
-      ownerPhoto: 'https://picsum.photos/200/200'
-    },
-    darkMode: false,
-    language: 'bn' // Default to Bangla as per prompt
+
+  // Initialize state from localStorage or use defaults
+  const [state, setState] = useState<AppState>(() => {
+    try {
+      const savedData = localStorage.getItem(STORAGE_KEY);
+      if (savedData) {
+        return JSON.parse(savedData);
+      }
+    } catch (error) {
+      console.error("Failed to load data from local storage", error);
+    }
+    // Default Initial State
+    return {
+      employees: INITIAL_EMPLOYEES,
+      attendance: [],
+      company: {
+        name: 'Alpha Tech Solutions',
+        ownerName: 'Md. Owner Rahman',
+        ownerPhoto: 'https://picsum.photos/200/200'
+      },
+      darkMode: false,
+      language: 'bn' // Default to Bangla as per prompt
+    };
   });
 
   // --- EFFECTS ---
+  
+  // Save to localStorage whenever state changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (error) {
+      console.error("Failed to save data to local storage", error);
+      // Handle quota exceeded error if images are too large
+      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+         alert("Storage full! Please try uploading smaller images or clearing old data.");
+      }
+    }
+  }, [state]);
+
   // Dark mode class toggle
   useEffect(() => {
     if (state.darkMode) {

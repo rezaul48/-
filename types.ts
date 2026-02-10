@@ -86,6 +86,7 @@ export const TRANSLATIONS = {
     uploadPhoto: 'Upload Photo',
     cancel: 'Cancel',
     saveChanges: 'Save Changes',
+    downloadPDF: 'Download PDF',
   },
   bn: {
     dashboard: 'ড্যাশবোর্ড',
@@ -138,5 +139,6 @@ export const TRANSLATIONS = {
     uploadPhoto: 'ছবি আপলোড করুন',
     cancel: 'বাতিল',
     saveChanges: 'পরিবর্তন সেভ করুন',
+    downloadPDF: 'পিডিএফ ডাউনলোড',
   }
 };
