@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Employee, TRANSLATIONS } from '../types';
-import { UserPlus, Trash2, Search, Phone, MapPin, DollarSign } from 'lucide-react';
+import { UserPlus, Trash2, Search, Phone, MapPin, DollarSign, AlertTriangle, X } from 'lucide-react';
 
 interface EmployeeListProps {
   employees: Employee[];
@@ -13,6 +13,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onAddEmployee, o
   const t = TRANSLATIONS[lang];
   const [showForm, setShowForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [employeeToDelete, setEmployeeToDelete] = useState<string | null>(null);
   
   // Form State
   const [name, setName] = useState('');
@@ -41,6 +42,13 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onAddEmployee, o
     setShowForm(false);
   };
 
+  const handleDeleteConfirm = () => {
+    if (employeeToDelete) {
+      onRemoveEmployee(employeeToDelete);
+      setEmployeeToDelete(null);
+    }
+  };
+
   const filteredEmployees = employees.filter(emp => 
     emp.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     emp.id.includes(searchQuery)
@@ -48,6 +56,36 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onAddEmployee, o
 
   return (
     <div className="space-y-6">
+      {/* Confirmation Modal */}
+      {employeeToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full shadow-2xl border border-gray-200 dark:border-gray-700 transform transition-all scale-100">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center text-red-600 dark:text-red-400 mb-4">
+                <AlertTriangle size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t.confirmDeleteTitle}</h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-6">{t.confirmDeleteMessage}</p>
+              
+              <div className="flex gap-3 w-full">
+                <button 
+                  onClick={() => setEmployeeToDelete(null)}
+                  className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition font-medium"
+                >
+                  {t.cancel}
+                </button>
+                <button 
+                  onClick={handleDeleteConfirm}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium"
+                >
+                  {t.delete}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
          <div className="flex items-center gap-2 w-full md:w-auto">
             <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
@@ -79,27 +117,33 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onAddEmployee, o
       </div>
 
       {showForm && (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-primary/20 animate-fade-in">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-primary/20 animate-fade-in relative">
+          <button 
+             onClick={() => setShowForm(false)} 
+             className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+          >
+             <X size={20} />
+          </button>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t.name}</label>
-              <input required value={name} onChange={e => setName(e.target.value)} className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none" placeholder="e.g. Rahim Uddin" />
+              <input required value={name} onChange={e => setName(e.target.value)} className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none text-gray-800 dark:text-white" placeholder="e.g. Rahim Uddin" />
             </div>
              <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t.mobile}</label>
-              <input required value={mobile} onChange={e => setMobile(e.target.value)} className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none" placeholder="017..." />
+              <input required value={mobile} onChange={e => setMobile(e.target.value)} className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none text-gray-800 dark:text-white" placeholder="017..." />
             </div>
              <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t.address}</label>
-              <input required value={address} onChange={e => setAddress(e.target.value)} className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none" placeholder="Dhaka, Bangladesh" />
+              <input required value={address} onChange={e => setAddress(e.target.value)} className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none text-gray-800 dark:text-white" placeholder="Dhaka, Bangladesh" />
             </div>
              <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t.salary} (Monthly)</label>
-              <input required type="number" value={salary} onChange={e => setSalary(e.target.value)} className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none" placeholder="15000" />
+              <input required type="number" value={salary} onChange={e => setSalary(e.target.value)} className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none text-gray-800 dark:text-white" placeholder="15000" />
             </div>
             <div className="md:col-span-2 flex justify-end gap-3 mt-2">
-              <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-gray-500 hover:text-gray-700 dark:text-gray-400">Cancel</button>
-              <button type="submit" className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-blue-600 transition">{t.save}</button>
+              <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 font-medium">Cancel</button>
+              <button type="submit" className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-blue-600 transition font-medium">{t.save}</button>
             </div>
           </form>
         </div>
@@ -109,42 +153,53 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onAddEmployee, o
         {filteredEmployees.map(emp => (
           <div key={emp.id} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition relative group">
             <button 
-              onClick={() => onRemoveEmployee(emp.id)}
-              className="absolute top-4 right-4 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition"
+              onClick={() => setEmployeeToDelete(emp.id)}
+              className="absolute top-4 right-4 text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition"
+              title={t.delete}
             >
               <Trash2 size={18} />
             </button>
             
             <div className="flex items-center gap-4 mb-4">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-lg">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-blue-500/20 shadow-lg">
                 {emp.name.charAt(0)}
               </div>
               <div>
                 <h3 className="font-bold text-lg text-gray-800 dark:text-white">{emp.name}</h3>
-                <span className="text-xs font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-500">ID: {emp.id}</span>
+                <span className="text-xs font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-500 dark:text-gray-400">ID: {emp.id}</span>
               </div>
             </div>
             
-            <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-               <div className="flex items-center gap-2">
-                 <Phone size={14} />
+            <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400 border-t border-gray-100 dark:border-gray-700 pt-4">
+               <div className="flex items-center gap-3">
+                 <div className="p-1.5 bg-gray-100 dark:bg-gray-700 rounded-full">
+                    <Phone size={14} />
+                 </div>
                  {emp.mobile}
                </div>
-               <div className="flex items-center gap-2">
-                 <MapPin size={14} />
+               <div className="flex items-center gap-3">
+                 <div className="p-1.5 bg-gray-100 dark:bg-gray-700 rounded-full">
+                   <MapPin size={14} />
+                 </div>
                  {emp.address}
                </div>
-               <div className="flex items-center gap-2 text-green-600 dark:text-green-400 font-medium">
-                 <DollarSign size={14} />
-                 {lang === 'en' ? '৳' : '৳'}{emp.salary.toLocaleString()} / Month
+               <div className="flex items-center gap-3">
+                 <div className="p-1.5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full">
+                   <DollarSign size={14} />
+                 </div>
+                 <span className="font-semibold text-gray-900 dark:text-white">
+                    {lang === 'en' ? '৳' : '৳'}{emp.salary.toLocaleString()}
+                 </span>
+                 <span className="text-xs text-gray-400">/ Month</span>
                </div>
             </div>
           </div>
         ))}
         
         {employees.length === 0 && !showForm && !searchQuery && (
-           <div className="col-span-full py-12 text-center text-gray-400">
-             No employees yet. Click "Add Employee" to start.
+           <div className="col-span-full py-12 text-center text-gray-400 bg-white dark:bg-gray-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+             <UserPlus size={48} className="mx-auto mb-4 opacity-20" />
+             <p>No employees yet. Click "Add Employee" to start.</p>
            </div>
         )}
 

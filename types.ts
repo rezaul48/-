@@ -87,6 +87,9 @@ export const TRANSLATIONS = {
     cancel: 'Cancel',
     saveChanges: 'Save Changes',
     downloadPDF: 'Download PDF',
+    confirmDeleteTitle: 'Delete Employee',
+    confirmDeleteMessage: 'Are you sure you want to delete this employee? This action cannot be undone.',
+    delete: 'Delete',
   },
   bn: {
     dashboard: 'ড্যাশবোর্ড',
@@ -140,5 +143,8 @@ export const TRANSLATIONS = {
     cancel: 'বাতিল',
     saveChanges: 'পরিবর্তন সেভ করুন',
     downloadPDF: 'পিডিএফ ডাউনলোড',
+    confirmDeleteTitle: 'কর্মচারী মুছুন',
+    confirmDeleteMessage: 'আপনি কি নিশ্চিত যে আপনি এই কর্মচারীকে মুছে ফেলতে চান? এই কাজটি ফিরিয়ে আনা যাবে না।',
+    delete: 'মুছুন',
   }
 };
