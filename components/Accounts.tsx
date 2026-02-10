@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Employee, AttendanceRecord, TRANSLATIONS } from '../types';
-import { DollarSign, Printer, Calculator, Clock, Download, Loader2, Calendar, Search, Filter } from 'lucide-react';
+import { DollarSign, Printer, Calculator, Clock, Download, Loader2, Calendar, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
@@ -25,6 +25,10 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
   const [selectedEmp, setSelectedEmp] = useState<string>(employees[0]?.id || '');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   // Filter Employees List based on Search
   const filteredEmployees = useMemo(() => {
     return employees.filter(emp => 
@@ -32,6 +36,17 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
       emp.id.includes(searchQuery)
     );
   }, [employees, searchQuery]);
+
+  // Reset pagination when search query changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  // Pagination Logic
+  const totalItems = filteredEmployees.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentEmployees = filteredEmployees.slice(startIndex, startIndex + itemsPerPage);
 
   const calculateStats = (empId: string) => {
     const emp = employees.find(e => e.id === empId);
@@ -170,13 +185,19 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Selection Sidebar */}
         <div className="lg:col-span-1 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col h-[600px]">
-           <h3 className="font-semibold mb-4 text-gray-700 dark:text-gray-300 flex items-center gap-2">
-              <Filter size={18} />
-              Employee List
-           </h3>
+           <div className="flex justify-between items-center mb-4">
+              <h3 className="font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <Filter size={18} />
+                  Employee List
+              </h3>
+              <span className="bg-primary/10 text-primary text-xs font-bold px-2 py-1 rounded-full">
+                {totalItems}
+              </span>
+           </div>
+           
            <div className="space-y-2 overflow-y-auto flex-1 pr-2">
-             {filteredEmployees.length > 0 ? (
-                filteredEmployees.map(emp => (
+             {currentEmployees.length > 0 ? (
+                currentEmployees.map(emp => (
                  <button
                    key={emp.id}
                    onClick={() => setSelectedEmp(emp.id)}
@@ -202,6 +223,29 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
                </div>
              )}
            </div>
+           
+           {/* Pagination Controls */}
+           {totalItems > itemsPerPage && (
+              <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
+                 <button 
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition text-gray-600 dark:text-gray-300"
+                 >
+                    <ChevronLeft size={20} />
+                 </button>
+                 <span className="text-xs text-gray-500 font-medium">
+                    Page {currentPage} of {totalPages}
+                 </span>
+                 <button 
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition text-gray-600 dark:text-gray-300"
+                 >
+                    <ChevronRight size={20} />
+                 </button>
+              </div>
+           )}
         </div>
 
         {/* Details & Pay Slip */}
