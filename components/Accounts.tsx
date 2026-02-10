@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Employee, AttendanceRecord, TRANSLATIONS } from '../types';
-import { DollarSign, Printer, Calculator } from 'lucide-react';
+import { DollarSign, Printer, Calculator, Clock } from 'lucide-react';
 
 interface AccountsProps {
   employees: Employee[];
@@ -18,26 +18,35 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
 
     const empRecords = attendance.filter(a => a.employeeId === empId);
     
-    // Simplistic Calculation Logic
+    // Calculation Logic
     const dailyRate = emp.salary / 30;
+    const hourlyRate = dailyRate / 8; // Assuming 8 hour work day
     
-    // Count days (In real app, filter by current month/week)
+    // Count days
     const presentDays = empRecords.filter(r => r.status === 'Present' || r.status === 'Late').length;
     const leaveDays = empRecords.filter(r => r.status === 'Leave').length; // Assuming paid leave
     
+    // Calculate Overtime
+    const totalOvertimeHours = empRecords.reduce((sum, r) => sum + (r.overtimeHours || 0), 0);
+    const overtimePay = Math.round(totalOvertimeHours * hourlyRate);
+
     const payableDays = presentDays + leaveDays;
-    const earnedTotal = Math.round(payableDays * dailyRate);
+    const baseEarned = Math.round(payableDays * dailyRate);
+    const totalEarned = baseEarned + overtimePay;
 
     // Mock weekly/monthly for demo using the total available data
-    const weeklyEarned = Math.round(Math.min(payableDays, 7) * dailyRate); 
+    const weeklyEarned = Math.round(Math.min(payableDays, 7) * dailyRate) + Math.round((totalOvertimeHours / 4) * hourlyRate); 
     const dailyIncome = Math.round(dailyRate);
 
     return {
       dailyIncome,
-      weeklyEarned, // This is just a simulation based on logic
-      totalEarned: earnedTotal,
+      weeklyEarned,
+      baseEarned,
+      overtimePay,
+      totalEarned,
       presentDays,
       leaveDays,
+      totalOvertimeHours,
       salary: emp.salary,
       name: emp.name,
       id: emp.id
@@ -78,7 +87,7 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
           {stats ? (
             <>
               {/* Income Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-900/50">
                     <p className="text-sm text-blue-600 dark:text-blue-300">{t.dailyIncome}</p>
                     <h4 className="text-xl font-bold text-blue-800 dark:text-blue-100">৳{stats.dailyIncome}</h4>
@@ -87,8 +96,12 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
                     <p className="text-sm text-purple-600 dark:text-purple-300">{t.weeklyIncome} (Est)</p>
                     <h4 className="text-xl font-bold text-purple-800 dark:text-purple-100">৳{stats.weeklyEarned}</h4>
                  </div>
+                 <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg border border-orange-100 dark:border-orange-900/50">
+                    <p className="text-sm text-orange-600 dark:text-orange-300">{t.totalOvertime}</p>
+                    <h4 className="text-xl font-bold text-orange-800 dark:text-orange-100">{stats.totalOvertimeHours} Hrs</h4>
+                 </div>
                  <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-100 dark:border-green-900/50">
-                    <p className="text-sm text-green-600 dark:text-green-300">Total Earned (To Date)</p>
+                    <p className="text-sm text-green-600 dark:text-green-300">Total Payable</p>
                     <h4 className="text-xl font-bold text-green-800 dark:text-green-100">৳{stats.totalEarned}</h4>
                  </div>
               </div>
@@ -124,20 +137,28 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
                    <thead>
                      <tr className="bg-gray-50 dark:bg-gray-700 text-left text-sm text-gray-500 dark:text-gray-300">
                        <th className="p-3 rounded-l-lg">Description</th>
-                       <th className="p-3 text-right">Days</th>
+                       <th className="p-3 text-right">Qty/Days</th>
                        <th className="p-3 rounded-r-lg text-right">Amount</th>
                      </tr>
                    </thead>
                    <tbody className="text-gray-700 dark:text-gray-300">
                      <tr className="border-b border-gray-100 dark:border-gray-700">
                        <td className="p-3">Basic Salary (Monthly)</td>
-                       <td className="p-3 text-right">30</td>
+                       <td className="p-3 text-right">30 Days</td>
                        <td className="p-3 text-right">৳{stats.salary}</td>
                      </tr>
                       <tr className="border-b border-gray-100 dark:border-gray-700">
                        <td className="p-3">Attendance Earnings (Pro-rata)</td>
-                       <td className="p-3 text-right">{stats.presentDays + stats.leaveDays}</td>
-                       <td className="p-3 text-right font-bold">৳{stats.totalEarned}</td>
+                       <td className="p-3 text-right">{stats.presentDays + stats.leaveDays} Days</td>
+                       <td className="p-3 text-right">৳{stats.baseEarned}</td>
+                     </tr>
+                     <tr className="border-b border-gray-100 dark:border-gray-700 bg-orange-50/50 dark:bg-orange-900/10">
+                       <td className="p-3 flex items-center gap-2">
+                           <Clock size={14} className="text-orange-500"/> 
+                           {t.overtime}
+                       </td>
+                       <td className="p-3 text-right">{stats.totalOvertimeHours} Hrs</td>
+                       <td className="p-3 text-right font-medium text-orange-600 dark:text-orange-400">+ ৳{stats.overtimePay}</td>
                      </tr>
                    </tbody>
                  </table>

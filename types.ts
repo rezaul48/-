@@ -17,6 +17,7 @@ export interface AttendanceRecord {
   date: string; // ISO Date string YYYY-MM-DD
   status: AttendanceStatus;
   checkInTime?: string;
+  overtimeHours?: number; // New field for overtime
 }
 
 export interface CompanyInfo {
@@ -74,6 +75,11 @@ export const TRANSLATIONS = {
     searchByName: 'Search by Name...',
     searchByID: 'Search by ID...',
     noRecords: 'No attendance records found for this criteria.',
+    overtime: 'Overtime',
+    overtimeHours: 'OT (Hrs)',
+    overtimeRate: 'OT Rate',
+    overtimePay: 'Overtime Pay',
+    totalOvertime: 'Total Overtime',
   },
   bn: {
     dashboard: 'ড্যাশবোর্ড',
@@ -115,5 +121,10 @@ export const TRANSLATIONS = {
     searchByName: 'নাম দিয়ে খুঁজুন...',
     searchByID: 'আইডি দিয়ে খুঁজুন...',
     noRecords: 'এই তথ্যের সাথে কোনো হাজিরার রেকর্ড পাওয়া যায়নি।',
+    overtime: 'ওভারটাইম',
+    overtimeHours: 'ওভারটাইম (ঘন্টা)',
+    overtimeRate: 'ওভারটাইম রেট',
+    overtimePay: 'ওভারটাইম টাকা',
+    totalOvertime: 'মোট ওভারটাইম',
   }
 };

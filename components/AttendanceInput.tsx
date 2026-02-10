@@ -13,35 +13,69 @@ const AttendanceInput: React.FC<AttendanceInputProps> = ({ employees, attendance
   const t = TRANSLATIONS[lang];
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   
-  // Local state to hold unsaved changes for the selected date
-  // In a real app, this would check `attendance` prop first to pre-fill
+  // Helper to get existing record
+  const getExistingRecord = (empId: string) => {
+    return attendance.find(a => a.employeeId === empId && a.date === selectedDate);
+  };
+
   const getInitialStatus = (empId: string): AttendanceStatus | null => {
-    const record = attendance.find(a => a.employeeId === empId && a.date === selectedDate);
+    const record = getExistingRecord(empId);
     return record ? record.status : null;
   };
 
-  const [changes, setChanges] = useState<Record<string, AttendanceStatus>>({});
+  const getInitialOvertime = (empId: string): number => {
+    const record = getExistingRecord(empId);
+    return record?.overtimeHours || 0;
+  };
+
+  const [statusChanges, setStatusChanges] = useState<Record<string, AttendanceStatus>>({});
+  const [overtimeChanges, setOvertimeChanges] = useState<Record<string, number>>({});
 
   const handleStatusChange = (empId: string, status: AttendanceStatus) => {
-    setChanges(prev => ({ ...prev, [empId]: status }));
+    setStatusChanges(prev => ({ ...prev, [empId]: status }));
+  };
+
+  const handleOvertimeChange = (empId: string, hours: string) => {
+    const numHours = parseFloat(hours);
+    if (!isNaN(numHours) && numHours >= 0) {
+      setOvertimeChanges(prev => ({ ...prev, [empId]: numHours }));
+    } else if (hours === '') {
+       setOvertimeChanges(prev => ({ ...prev, [empId]: 0 }));
+    }
   };
 
   const handleSave = () => {
-    const newRecords: AttendanceRecord[] = Object.entries(changes).map(([empId, status]) => ({
-      id: `${selectedDate}-${empId}`,
-      employeeId: empId,
-      date: selectedDate,
-      status: status as AttendanceStatus,
-      checkInTime: new Date().toLocaleTimeString(),
-    }));
+    // Merge changes with existing data or defaults
+    const newRecords: AttendanceRecord[] = employees.map(emp => {
+      // Determine Status: Changed > Existing > Default (null, effectively handled by not saving if not set)
+      const currentStatus = statusChanges[emp.id] || getInitialStatus(emp.id);
+      
+      // Determine Overtime: Changed > Existing > 0
+      // Note: We use 'undefined' check for changes because 0 is a valid value
+      const currentOvertime = overtimeChanges[emp.id] !== undefined 
+        ? overtimeChanges[emp.id] 
+        : getInitialOvertime(emp.id);
+
+      if (!currentStatus) return null; // Skip if no status set
+
+      return {
+        id: `${selectedDate}-${emp.id}`,
+        employeeId: emp.id,
+        date: selectedDate,
+        status: currentStatus,
+        checkInTime: new Date().toLocaleTimeString(),
+        overtimeHours: currentOvertime
+      };
+    }).filter((r): r is AttendanceRecord => r !== null);
     
-    // In a real app, we'd merge, but for this demo, we assume we just send updates
     onMarkAttendance(newRecords);
-    alert("Attendance Saved!");
-    setChanges({});
+    alert("Attendance & Overtime Saved!");
+    setStatusChanges({});
+    setOvertimeChanges({});
   };
 
-  const getStatus = (empId: string) => changes[empId] || getInitialStatus(empId);
+  const getStatus = (empId: string) => statusChanges[empId] || getInitialStatus(empId);
+  const getOvertime = (empId: string) => overtimeChanges[empId] !== undefined ? overtimeChanges[empId] : getInitialOvertime(empId);
 
   return (
     <div className="space-y-6">
@@ -56,7 +90,8 @@ const AttendanceInput: React.FC<AttendanceInputProps> = ({ employees, attendance
              value={selectedDate} 
              onChange={(e) => {
                 setSelectedDate(e.target.value);
-                setChanges({});
+                setStatusChanges({});
+                setOvertimeChanges({});
              }}
              className="p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-gray-800 dark:text-white"
            />
@@ -81,16 +116,20 @@ const AttendanceInput: React.FC<AttendanceInputProps> = ({ employees, attendance
                 <th className="p-4 font-semibold text-center text-gray-600 dark:text-gray-300">Absent</th>
                 <th className="p-4 font-semibold text-center text-gray-600 dark:text-gray-300">Leave</th>
                 <th className="p-4 font-semibold text-center text-gray-600 dark:text-gray-300">Late</th>
+                <th className="p-4 font-semibold text-center text-gray-600 dark:text-gray-300">{t.overtimeHours}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {employees.length === 0 ? (
                 <tr>
-                    <td colSpan={7} className="p-8 text-center text-gray-500">No employees found. Add some from the Employee List.</td>
+                    <td colSpan={8} className="p-8 text-center text-gray-500">No employees found. Add some from the Employee List.</td>
                 </tr>
               ) : (
                 employees.map((emp, index) => {
                 const currentStatus = getStatus(emp.id);
+                const currentOT = getOvertime(emp.id);
+                const isAbsentOrLeave = currentStatus === 'Absent' || currentStatus === 'Leave';
+
                 return (
                   <tr key={emp.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition">
                     <td className="p-4 text-gray-600 dark:text-gray-400">{index + 1}</td>
@@ -118,7 +157,10 @@ const AttendanceInput: React.FC<AttendanceInputProps> = ({ employees, attendance
                        <StatusRadio 
                         name={`status-${emp.id}`} 
                         checked={currentStatus === 'Absent'} 
-                        onChange={() => handleStatusChange(emp.id, 'Absent')} 
+                        onChange={() => {
+                          handleStatusChange(emp.id, 'Absent');
+                          handleOvertimeChange(emp.id, '0'); // Reset OT if absent
+                        }} 
                          color="text-red-500"
                          bg="bg-red-500"
                       />
@@ -127,7 +169,10 @@ const AttendanceInput: React.FC<AttendanceInputProps> = ({ employees, attendance
                        <StatusRadio 
                         name={`status-${emp.id}`} 
                         checked={currentStatus === 'Leave'} 
-                        onChange={() => handleStatusChange(emp.id, 'Leave')} 
+                        onChange={() => {
+                          handleStatusChange(emp.id, 'Leave');
+                          handleOvertimeChange(emp.id, '0'); // Reset OT if on leave
+                        }} 
                          color="text-yellow-500"
                          bg="bg-yellow-500"
                       />
@@ -140,6 +185,24 @@ const AttendanceInput: React.FC<AttendanceInputProps> = ({ employees, attendance
                          color="text-orange-500"
                          bg="bg-orange-500"
                       />
+                    </td>
+                    
+                    {/* Overtime Input */}
+                    <td className="p-4 text-center">
+                        <input 
+                            type="number" 
+                            min="0"
+                            max="24"
+                            disabled={isAbsentOrLeave}
+                            value={currentOT}
+                            onChange={(e) => handleOvertimeChange(emp.id, e.target.value)}
+                            className={`w-20 p-2 border rounded-md text-center focus:ring-2 focus:ring-primary outline-none transition
+                              ${isAbsentOrLeave 
+                                ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 border-gray-200 dark:border-gray-700 cursor-not-allowed' 
+                                : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-white border-gray-300 dark:border-gray-600'
+                              }
+                            `}
+                        />
                     </td>
                   </tr>
                 );

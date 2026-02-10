@@ -50,7 +50,7 @@ const Reports: React.FC<ReportsProps> = ({ employees, attendance, lang }) => {
       return;
     }
 
-    const headers = ['Date', 'Employee Name', 'ID', 'Status', 'Check In Time'];
+    const headers = ['Date', 'Employee Name', 'ID', 'Status', 'Check In Time', 'Overtime (Hrs)'];
     const rows = filteredRecords.map(record => {
       const emp = employees.find(e => e.id === record.employeeId);
       // Escape values to ensure CSV format doesn't break
@@ -61,7 +61,8 @@ const Reports: React.FC<ReportsProps> = ({ employees, attendance, lang }) => {
         safeVal(emp ? emp.name : 'Unknown Employee'),
         safeVal(record.employeeId),
         safeVal(record.status),
-        safeVal(record.checkInTime || '-')
+        safeVal(record.checkInTime || '-'),
+        safeVal((record.overtimeHours || 0).toString())
       ].join(',');
     });
 
@@ -144,12 +145,13 @@ const Reports: React.FC<ReportsProps> = ({ employees, attendance, lang }) => {
                 <th className="p-4 font-semibold text-gray-600 dark:text-gray-300">ID</th>
                 <th className="p-4 font-semibold text-gray-600 dark:text-gray-300">Status</th>
                 <th className="p-4 font-semibold text-gray-600 dark:text-gray-300">Check In</th>
+                <th className="p-4 font-semibold text-gray-600 dark:text-gray-300">OT (Hrs)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-12 text-center text-gray-500 flex flex-col items-center justify-center">
+                  <td colSpan={6} className="p-12 text-center text-gray-500 flex flex-col items-center justify-center">
                     <Filter size={48} className="mb-4 opacity-20" />
                     <p>{t.noRecords}</p>
                   </td>
@@ -175,6 +177,9 @@ const Reports: React.FC<ReportsProps> = ({ employees, attendance, lang }) => {
                       </td>
                       <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">
                         {record.checkInTime || '-'}
+                      </td>
+                       <td className="p-4 text-gray-800 dark:text-gray-200 font-mono">
+                        {record.overtimeHours ? `${record.overtimeHours} h` : '-'}
                       </td>
                     </tr>
                   );
