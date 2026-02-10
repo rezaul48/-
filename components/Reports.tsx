@@ -12,7 +12,12 @@ const Reports: React.FC<ReportsProps> = ({ employees, attendance, lang }) => {
   const t = TRANSLATIONS[lang];
   
   // State for filtering
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const today = new Date();
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
+
+  const [startDate, setStartDate] = useState(firstDay);
+  const [endDate, setEndDate] = useState(lastDay);
   const [searchName, setSearchName] = useState('');
   const [searchID, setSearchID] = useState('');
 
@@ -20,8 +25,8 @@ const Reports: React.FC<ReportsProps> = ({ employees, attendance, lang }) => {
   const filteredRecords = attendance.filter(record => {
     const emp = employees.find(e => e.id === record.employeeId);
     
-    // 1. Filter by Date (Exact match)
-    const matchesDate = record.date === selectedDate;
+    // 1. Filter by Date Range
+    const matchesDate = record.date >= startDate && record.date <= endDate;
 
     // 2. Filter by Name (Partial match, case insensitive)
     const matchesName = emp 
@@ -32,7 +37,7 @@ const Reports: React.FC<ReportsProps> = ({ employees, attendance, lang }) => {
     const matchesID = record.employeeId.includes(searchID);
 
     return matchesDate && matchesName && matchesID;
-  });
+  }).sort((a, b) => b.date.localeCompare(a.date)); // Sort descending by date
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -72,7 +77,7 @@ const Reports: React.FC<ReportsProps> = ({ employees, attendance, lang }) => {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `Hazira_Report_${selectedDate}.csv`);
+    link.setAttribute('download', `Hazira_Report_${startDate}_to_${endDate}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -97,40 +102,63 @@ const Reports: React.FC<ReportsProps> = ({ employees, attendance, lang }) => {
       </div>
 
       {/* Filters Section */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Date Filter */}
-        <div className="relative">
-          <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-          <input 
-            type="date" 
-            value={selectedDate} 
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none text-gray-800 dark:text-white"
-          />
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* From Date Filter */}
+        <div className="space-y-1">
+           <label className="text-xs font-semibold text-gray-500 uppercase ml-1">{t.fromDate}</label>
+           <div className="relative">
+             <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+             <input 
+               type="date" 
+               value={startDate} 
+               onChange={(e) => setStartDate(e.target.value)}
+               className="w-full pl-10 pr-4 py-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none text-gray-800 dark:text-white"
+             />
+           </div>
+        </div>
+
+        {/* To Date Filter */}
+        <div className="space-y-1">
+           <label className="text-xs font-semibold text-gray-500 uppercase ml-1">{t.toDate}</label>
+           <div className="relative">
+             <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+             <input 
+               type="date" 
+               value={endDate} 
+               onChange={(e) => setEndDate(e.target.value)}
+               className="w-full pl-10 pr-4 py-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none text-gray-800 dark:text-white"
+             />
+           </div>
         </div>
 
         {/* Name Filter */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-          <input 
-            type="text" 
-            placeholder={t.searchByName}
-            value={searchName}
-            onChange={(e) => setSearchName(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none text-gray-800 dark:text-white"
-          />
+        <div className="space-y-1">
+           <label className="text-xs font-semibold text-gray-500 uppercase ml-1">{t.name}</label>
+           <div className="relative">
+             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+             <input 
+               type="text" 
+               placeholder={t.searchByName}
+               value={searchName}
+               onChange={(e) => setSearchName(e.target.value)}
+               className="w-full pl-10 pr-4 py-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none text-gray-800 dark:text-white"
+             />
+           </div>
         </div>
 
         {/* ID Filter */}
-        <div className="relative">
-          <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-          <input 
-            type="text" 
-            placeholder={t.searchByID}
-            value={searchID}
-            onChange={(e) => setSearchID(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none text-gray-800 dark:text-white"
-          />
+        <div className="space-y-1">
+           <label className="text-xs font-semibold text-gray-500 uppercase ml-1">{t.id}</label>
+           <div className="relative">
+             <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+             <input 
+               type="text" 
+               placeholder={t.searchByID}
+               value={searchID}
+               onChange={(e) => setSearchID(e.target.value)}
+               className="w-full pl-10 pr-4 py-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none text-gray-800 dark:text-white"
+             />
+           </div>
         </div>
       </div>
 

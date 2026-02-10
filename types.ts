@@ -93,6 +93,12 @@ export const TRANSLATIONS = {
     confirmDeleteTitle: 'Delete Employee',
     confirmDeleteMessage: 'Are you sure you want to delete this employee? This action cannot be undone.',
     delete: 'Delete',
+    fromDate: 'From Date',
+    toDate: 'To Date',
+    searchPlaceholder: 'Search Name or ID',
+    paymentPeriod: 'Payment Period',
+    photo: 'Photo',
+    removePhoto: 'Remove Photo',
   },
   bn: {
     dashboard: 'ড্যাশবোর্ড',
@@ -152,5 +158,11 @@ export const TRANSLATIONS = {
     confirmDeleteTitle: 'কর্মচারী মুছুন',
     confirmDeleteMessage: 'আপনি কি নিশ্চিত যে আপনি এই কর্মচারীকে মুছে ফেলতে চান? এই কাজটি ফিরিয়ে আনা যাবে না।',
     delete: 'মুছুন',
+    fromDate: 'শুরুর তারিখ',
+    toDate: 'শেষ তারিখ',
+    searchPlaceholder: 'নাম বা আইডি দিয়ে খুঁজুন',
+    paymentPeriod: 'পেমেন্ট সময়কাল',
+    photo: 'ছবি',
+    removePhoto: 'ছবি মুছুন',
   }
 };

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Employee, TRANSLATIONS } from '../types';
-import { UserPlus, Trash2, Search, Phone, MapPin, DollarSign, AlertTriangle, X, Fingerprint, Edit2 } from 'lucide-react';
+import { UserPlus, Trash2, Search, Phone, MapPin, DollarSign, AlertTriangle, X, Fingerprint, Edit2, Camera, Upload } from 'lucide-react';
 
 interface EmployeeListProps {
   employees: Employee[];
@@ -23,6 +23,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onAddEmployee, o
   const [address, setAddress] = useState('');
   const [mobile, setMobile] = useState('');
   const [salary, setSalary] = useState('');
+  const [avatar, setAvatar] = useState<string>('');
 
   const generateId = () => {
     return Math.floor(1000 + Math.random() * 9000).toString();
@@ -34,6 +35,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onAddEmployee, o
     setMobile('');
     setSalary('');
     setCustomId('');
+    setAvatar('');
     setEditingEmployeeId(null);
     setShowForm(false);
   };
@@ -47,6 +49,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onAddEmployee, o
       setAddress('');
       setMobile('');
       setSalary('');
+      setAvatar('');
     }
     setShowForm(!showForm);
   };
@@ -58,7 +61,19 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onAddEmployee, o
     setAddress(emp.address);
     setMobile(emp.mobile);
     setSalary(emp.salary.toString());
+    setAvatar(emp.avatar || '');
     setShowForm(true);
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatar(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -76,6 +91,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onAddEmployee, o
       address,
       mobile,
       salary: Number(salary) || 0,
+      avatar: avatar || undefined
     };
 
     if (editingEmployeeId) {
@@ -169,43 +185,77 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onAddEmployee, o
           >
              <X size={20} />
           </button>
-          <div className="mb-4">
+          <div className="mb-6">
              <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
                {editingEmployeeId ? <Edit2 size={20} className="text-primary"/> : <UserPlus size={20} className="text-secondary"/>}
                {editingEmployeeId ? t.updateEmployee : t.addEmployee}
              </h3>
           </div>
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t.name}</label>
-              <input required value={name} onChange={e => setName(e.target.value)} className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none text-gray-800 dark:text-white" placeholder="e.g. Rahim Uddin" />
+          
+          <form onSubmit={handleSubmit}>
+            <div className="flex flex-col md:flex-row gap-8">
+                {/* Photo Upload Section */}
+                <div className="flex flex-col items-center gap-3">
+                   <div className="relative w-32 h-32 rounded-full bg-gray-100 dark:bg-gray-700 border-4 border-white dark:border-gray-600 shadow-sm flex items-center justify-center overflow-hidden group">
+                      {avatar ? (
+                        <img src={avatar} alt="Preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <Camera size={40} className="text-gray-300 dark:text-gray-500" />
+                      )}
+                      
+                      <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                        <Upload className="text-white" size={24} />
+                        <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                      </label>
+                   </div>
+                   
+                   {avatar && (
+                     <button 
+                        type="button" 
+                        onClick={() => setAvatar('')} 
+                        className="text-xs text-red-500 hover:text-red-600 font-medium flex items-center gap-1"
+                     >
+                       <X size={12} /> {t.removePhoto}
+                     </button>
+                   )}
+                   <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{t.photo}</span>
+                </div>
+
+                {/* Form Fields */}
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t.name}</label>
+                      <input required value={name} onChange={e => setName(e.target.value)} className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none text-gray-800 dark:text-white" placeholder="e.g. Rahim Uddin" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t.id || 'ID'}</label>
+                      <div className="relative">
+                        <Fingerprint className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                        <input 
+                            required 
+                            value={customId} 
+                            onChange={e => setCustomId(e.target.value)} 
+                            className="w-full pl-10 pr-3 py-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none text-gray-800 dark:text-white font-mono" 
+                            placeholder="1001" 
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t.mobile}</label>
+                      <input required value={mobile} onChange={e => setMobile(e.target.value)} className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none text-gray-800 dark:text-white" placeholder="017..." />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t.address}</label>
+                      <input required value={address} onChange={e => setAddress(e.target.value)} className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none text-gray-800 dark:text-white" placeholder="Dhaka, Bangladesh" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t.salary} (Monthly)</label>
+                      <input required type="number" value={salary} onChange={e => setSalary(e.target.value)} className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none text-gray-800 dark:text-white" placeholder="15000" />
+                    </div>
+                </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t.id || 'ID'}</label>
-              <div className="relative">
-                <Fingerprint className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                <input 
-                    required 
-                    value={customId} 
-                    onChange={e => setCustomId(e.target.value)} 
-                    className="w-full pl-10 pr-3 py-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none text-gray-800 dark:text-white font-mono" 
-                    placeholder="1001" 
-                />
-              </div>
-            </div>
-             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t.mobile}</label>
-              <input required value={mobile} onChange={e => setMobile(e.target.value)} className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none text-gray-800 dark:text-white" placeholder="017..." />
-            </div>
-             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t.address}</label>
-              <input required value={address} onChange={e => setAddress(e.target.value)} className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none text-gray-800 dark:text-white" placeholder="Dhaka, Bangladesh" />
-            </div>
-             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t.salary} (Monthly)</label>
-              <input required type="number" value={salary} onChange={e => setSalary(e.target.value)} className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none text-gray-800 dark:text-white" placeholder="15000" />
-            </div>
-            <div className="md:col-span-2 flex justify-end gap-3 mt-2">
+
+            <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-gray-100 dark:border-gray-700">
               <button type="button" onClick={resetForm} className="px-4 py-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 font-medium">{t.cancel}</button>
               <button type="submit" className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-blue-600 transition font-medium">{t.save}</button>
             </div>
@@ -234,9 +284,18 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onAddEmployee, o
             </div>
             
             <div className="flex items-center gap-4 mb-4">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-blue-500/20 shadow-lg">
-                {emp.name.charAt(0)}
-              </div>
+              {emp.avatar ? (
+                <img 
+                  src={emp.avatar} 
+                  alt={emp.name} 
+                  className="w-12 h-12 rounded-full object-cover shadow-lg shadow-blue-500/20 border-2 border-white dark:border-gray-600"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-blue-500/20 shadow-lg">
+                  {emp.name.charAt(0)}
+                </div>
+              )}
+              
               <div>
                 <h3 className="font-bold text-lg text-gray-800 dark:text-white">{emp.name}</h3>
                 <span className="text-xs font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-500 dark:text-gray-400">ID: {emp.id}</span>
