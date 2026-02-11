@@ -119,6 +119,8 @@ export const TRANSLATIONS = {
     advance: 'Advance',
     bonus: 'Bonus',
     others: 'Others',
+    confirmDeleteTxTitle: 'Delete Transaction',
+    confirmDeleteTxMessage: 'Are you sure you want to delete this transaction record? This action cannot be undone.',
   },
   bn: {
     dashboard: 'ড্যাশবোর্ড',
@@ -192,5 +194,7 @@ export const TRANSLATIONS = {
     advance: 'অগ্রিম',
     bonus: 'বোনাস',
     others: 'অন্যান্য',
+    confirmDeleteTxTitle: 'লেনদেন মুছুন',
+    confirmDeleteTxMessage: 'আপনি কি নিশ্চিত যে আপনি এই লেনদেনের রেকর্ডটি মুছে ফেলতে চান? এটি আর ফিরে পাওয়া যাবে না।',
   }
 };

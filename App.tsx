@@ -144,6 +144,13 @@ const App: React.FC = () => {
     setState(prev => ({ ...prev, transactions: [tx, ...prev.transactions] }));
   };
 
+  const handleUpdateTransaction = (id: string, updatedTx: Transaction) => {
+    setState(prev => ({
+      ...prev,
+      transactions: prev.transactions.map(t => t.id === id ? updatedTx : t)
+    }));
+  };
+
   const handleRemoveTransaction = (id: string) => {
     setState(prev => ({ ...prev, transactions: prev.transactions.filter(t => t.id !== id) }));
   };
@@ -183,6 +190,7 @@ const App: React.FC = () => {
                   employees={state.employees} 
                   transactions={state.transactions} 
                   onAddTransaction={handleAddTransaction} 
+                  onUpdateTransaction={handleUpdateTransaction}
                   onRemoveTransaction={handleRemoveTransaction} 
                   lang={state.language} 
                 />;

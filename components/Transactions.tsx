@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
 import { Employee, Transaction, TransactionType, TRANSLATIONS } from '../types';
-import { Banknote, Plus, Trash2, Search, Calendar, User, Info, X } from 'lucide-react';
+import { Banknote, Plus, Trash2, Search, Calendar, Edit2, X, AlertTriangle } from 'lucide-react';
 
 interface TransactionsProps {
   employees: Employee[];
   transactions: Transaction[];
   onAddTransaction: (tx: Transaction) => void;
+  onUpdateTransaction: (id: string, tx: Transaction) => void;
   onRemoveTransaction: (id: string) => void;
   lang: 'en' | 'bn';
 }
 
-const Transactions: React.FC<TransactionsProps> = ({ employees, transactions, onAddTransaction, onRemoveTransaction, lang }) => {
+const Transactions: React.FC<TransactionsProps> = ({ employees, transactions, onAddTransaction, onUpdateTransaction, onRemoveTransaction, lang }) => {
   const t = TRANSLATIONS[lang];
   const [showForm, setShowForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [editingTxId, setEditingTxId] = useState<string | null>(null);
+  const [txToDelete, setTxToDelete] = useState<string | null>(null);
   
   // Form State
   const [empId, setEmpId] = useState(employees[0]?.id || '');
@@ -22,12 +25,39 @@ const Transactions: React.FC<TransactionsProps> = ({ employees, transactions, on
   const [type, setType] = useState<TransactionType>('Advance');
   const [note, setNote] = useState('');
 
+  const resetForm = () => {
+    setEmpId(employees[0]?.id || '');
+    setAmount('');
+    setDate(new Date().toISOString().split('T')[0]);
+    setType('Advance');
+    setNote('');
+    setEditingTxId(null);
+    setShowForm(false);
+  };
+
+  const handleEdit = (tx: Transaction) => {
+    setEditingTxId(tx.id);
+    setEmpId(tx.employeeId);
+    setAmount(tx.amount.toString());
+    setDate(tx.date);
+    setType(tx.type);
+    setNote(tx.note);
+    setShowForm(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (txToDelete) {
+      onRemoveTransaction(txToDelete);
+      setTxToDelete(null);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!empId || !amount) return;
 
-    const newTx: Transaction = {
-      id: Date.now().toString(),
+    const transactionData: Transaction = {
+      id: editingTxId || Date.now().toString(),
       employeeId: empId,
       amount: Number(amount),
       date,
@@ -35,10 +65,13 @@ const Transactions: React.FC<TransactionsProps> = ({ employees, transactions, on
       note
     };
 
-    onAddTransaction(newTx);
-    setAmount('');
-    setNote('');
-    setShowForm(false);
+    if (editingTxId) {
+      onUpdateTransaction(editingTxId, transactionData);
+    } else {
+      onAddTransaction(transactionData);
+    }
+    
+    resetForm();
   };
 
   const filteredTx = transactions.filter(tx => {
@@ -49,6 +82,36 @@ const Transactions: React.FC<TransactionsProps> = ({ employees, transactions, on
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Delete Confirmation Modal */}
+      {txToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full shadow-2xl border border-gray-200 dark:border-gray-700">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center text-red-600 dark:text-red-400 mb-4">
+                <AlertTriangle size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t.confirmDeleteTxTitle}</h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-6">{t.confirmDeleteTxMessage}</p>
+              
+              <div className="flex gap-3 w-full">
+                <button 
+                  onClick={() => setTxToDelete(null)}
+                  className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition font-medium"
+                >
+                  {t.cancel}
+                </button>
+                <button 
+                  onClick={handleDeleteConfirm}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium shadow-lg shadow-red-500/20"
+                >
+                  {t.delete}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
            <Banknote className="text-primary" />
@@ -66,7 +129,7 @@ const Transactions: React.FC<TransactionsProps> = ({ employees, transactions, on
              />
           </div>
           <button 
-            onClick={() => setShowForm(true)}
+            onClick={() => { resetForm(); setShowForm(true); }}
             className="px-6 py-2 bg-primary text-white rounded-lg font-medium hover:bg-blue-600 transition flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
           >
             <Plus size={18} /> {t.addTransaction}
@@ -76,10 +139,12 @@ const Transactions: React.FC<TransactionsProps> = ({ employees, transactions, on
 
       {showForm && (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-primary/20 animate-fade-in relative">
-          <button onClick={() => setShowForm(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+          <button onClick={resetForm} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
             <X size={20} />
           </button>
-          <h3 className="text-lg font-bold mb-6 text-gray-800 dark:text-white">{t.addTransaction}</h3>
+          <h3 className="text-lg font-bold mb-6 text-gray-800 dark:text-white">
+            {editingTxId ? (lang === 'bn' ? 'লেনদেন এডিট করুন' : 'Edit Transaction') : t.addTransaction}
+          </h3>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="space-y-1">
               <label className="text-xs font-bold text-gray-500 uppercase">{t.name}</label>
@@ -135,8 +200,10 @@ const Transactions: React.FC<TransactionsProps> = ({ employees, transactions, on
               />
             </div>
             <div className="lg:col-span-3 flex justify-end gap-3 mt-2">
-               <button type="button" onClick={() => setShowForm(false)} className="px-6 py-2 text-gray-500 font-medium">{t.cancel}</button>
-               <button type="submit" className="px-8 py-2 bg-primary text-white rounded-lg font-bold hover:bg-blue-600 transition shadow-md">{t.save}</button>
+               <button type="button" onClick={resetForm} className="px-6 py-2 text-gray-500 font-medium">{t.cancel}</button>
+               <button type="submit" className="px-8 py-2 bg-primary text-white rounded-lg font-bold hover:bg-blue-600 transition shadow-md">
+                 {editingTxId ? (lang === 'bn' ? 'আপডেট করুন' : 'Update') : t.save}
+               </button>
             </div>
           </form>
         </div>
@@ -205,12 +272,22 @@ const Transactions: React.FC<TransactionsProps> = ({ employees, transactions, on
                          {tx.note || '-'}
                       </td>
                       <td className="p-4 text-center">
-                         <button 
-                           onClick={() => onRemoveTransaction(tx.id)}
-                           className="text-gray-300 hover:text-red-500 transition"
-                         >
-                           <Trash2 size={18} />
-                         </button>
+                         <div className="flex justify-center gap-2">
+                           <button 
+                             onClick={() => handleEdit(tx)}
+                             className="text-gray-300 hover:text-primary transition p-1.5 rounded-lg hover:bg-primary/10"
+                             title={t.edit}
+                           >
+                             <Edit2 size={18} />
+                           </button>
+                           <button 
+                             onClick={() => setTxToDelete(tx.id)}
+                             className="text-gray-300 hover:text-red-500 transition p-1.5 rounded-lg hover:bg-red-500/10"
+                             title={t.delete}
+                           >
+                             <Trash2 size={18} />
+                           </button>
+                         </div>
                       </td>
                     </tr>
                   );
