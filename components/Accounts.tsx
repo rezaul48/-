@@ -1,16 +1,17 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Employee, AttendanceRecord, TRANSLATIONS } from '../types';
-import { DollarSign, Printer, Calculator, Clock, Download, Loader2, Calendar, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Employee, AttendanceRecord, Transaction, TRANSLATIONS } from '../types';
+import { DollarSign, Printer, Calculator, Clock, Download, Loader2, Calendar, Search, Filter, ChevronLeft, ChevronRight, Banknote } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
 interface AccountsProps {
   employees: Employee[];
   attendance: AttendanceRecord[];
+  transactions: Transaction[];
   lang: 'en' | 'bn';
 }
 
-const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
+const Accounts: React.FC<AccountsProps> = ({ employees, attendance, transactions, lang }) => {
   const t = TRANSLATIONS[lang];
   
   // Date State - Default to current month
@@ -58,6 +59,13 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
                a.date >= startDate && 
                a.date <= endDate;
     });
+
+    // Filter Transactions by Date Range and Employee ID
+    const empTransactions = transactions.filter(tx => {
+      return tx.employeeId === empId && 
+             tx.date >= startDate && 
+             tx.date <= endDate;
+    });
     
     // Calculation Logic
     const dailyRate = emp.salary / 30;
@@ -71,19 +79,30 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
     const totalOvertimeHours = empRecords.reduce((sum, r) => sum + (r.overtimeHours || 0), 0);
     const overtimePay = Math.round(totalOvertimeHours * hourlyRate);
 
+    // Calculate Transactions
+    const totalAdvance = empTransactions.filter(tx => tx.type === 'Advance').reduce((sum, tx) => sum + tx.amount, 0);
+    const totalSalaryPaid = empTransactions.filter(tx => tx.type === 'Salary').reduce((sum, tx) => sum + tx.amount, 0);
+    const totalBonus = empTransactions.filter(tx => tx.type === 'Bonus').reduce((sum, tx) => sum + tx.amount, 0);
+    const totalOthers = empTransactions.filter(tx => tx.type === 'Others').reduce((sum, tx) => sum + tx.amount, 0);
+
     const payableDays = presentDays + leaveDays;
     const baseEarned = Math.round(payableDays * dailyRate);
-    const totalEarned = baseEarned + overtimePay;
+    
+    // Final Calculation: (Earned + OT + Bonus + Others) - (Advance + Already Paid Salary)
+    const grossEarnings = baseEarned + overtimePay + totalBonus + totalOthers;
+    const totalDeductions = totalAdvance + totalSalaryPaid;
+    const totalEarned = grossEarnings - totalDeductions;
 
-    // Mock weekly/monthly for demo using the total available data
-    const weeklyEarned = Math.round(Math.min(payableDays, 7) * dailyRate) + Math.round((totalOvertimeHours / 4) * hourlyRate); 
     const dailyIncome = Math.round(dailyRate);
 
     return {
       dailyIncome,
-      weeklyEarned,
       baseEarned,
       overtimePay,
+      totalBonus,
+      totalOthers,
+      totalAdvance,
+      totalSalaryPaid,
       totalEarned,
       presentDays,
       leaveDays,
@@ -102,8 +121,8 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
     setIsGeneratingPdf(true);
     try {
       const canvas = await html2canvas(element, {
-        scale: 2, // Higher scale for better resolution
-        useCORS: true, // Handle cross-origin images like avatars
+        scale: 2,
+        useCORS: true,
         backgroundColor: document.documentElement.classList.contains('dark') ? '#1f2937' : '#ffffff',
       });
 
@@ -137,7 +156,6 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
          
          {/* Filter Inputs */}
          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
-             {/* From Date */}
              <div className="space-y-1">
                 <label className="text-xs font-semibold text-gray-500 uppercase">{t.fromDate}</label>
                 <div className="relative">
@@ -151,7 +169,6 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
                 </div>
              </div>
 
-             {/* To Date */}
              <div className="space-y-1">
                 <label className="text-xs font-semibold text-gray-500 uppercase">{t.toDate}</label>
                 <div className="relative">
@@ -165,7 +182,6 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
                 </div>
              </div>
              
-             {/* Employee Search */}
              <div className="space-y-1">
                 <label className="text-xs font-semibold text-gray-500 uppercase">Find Employee</label>
                 <div className="relative">
@@ -183,7 +199,6 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Selection Sidebar */}
         <div className="lg:col-span-1 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col h-[600px]">
            <div className="flex justify-between items-center mb-4">
               <h3 className="font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
@@ -224,7 +239,6 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
              )}
            </div>
            
-           {/* Pagination Controls */}
            {totalItems > itemsPerPage && (
               <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
                  <button 
@@ -248,11 +262,9 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
            )}
         </div>
 
-        {/* Details & Pay Slip */}
         <div className="lg:col-span-2 space-y-6">
           {stats ? (
             <>
-              {/* Income Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-900/50">
                     <p className="text-sm text-blue-600 dark:text-blue-300">{t.dailyIncome}</p>
@@ -272,7 +284,6 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
                  </div>
               </div>
 
-              {/* Pay Slip View */}
               <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700" id="payslip">
                  <div className="border-b-2 border-dashed border-gray-300 dark:border-gray-600 pb-6 mb-6">
                    <div className="flex justify-between items-start">
@@ -318,16 +329,11 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
                    </thead>
                    <tbody className="text-gray-700 dark:text-gray-300">
                      <tr className="border-b border-gray-100 dark:border-gray-700">
-                       <td className="p-3">Basic Salary (Monthly Config)</td>
-                       <td className="p-3 text-right">30 Days</td>
-                       <td className="p-3 text-right">৳{stats.salary}</td>
-                     </tr>
-                      <tr className="border-b border-gray-100 dark:border-gray-700">
-                       <td className="p-3">Earned Salary (Attendance Based)</td>
+                       <td className="p-3">Earned Salary (Attendance)</td>
                        <td className="p-3 text-right">{stats.presentDays + stats.leaveDays} Days</td>
                        <td className="p-3 text-right">৳{stats.baseEarned}</td>
                      </tr>
-                     <tr className="border-b border-gray-100 dark:border-gray-700 bg-orange-50/50 dark:bg-orange-900/10">
+                     <tr className="border-b border-gray-100 dark:border-gray-700">
                        <td className="p-3 flex items-center gap-2">
                            <Clock size={14} className="text-orange-500"/> 
                            {t.overtime}
@@ -335,12 +341,42 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
                        <td className="p-3 text-right">{stats.totalOvertimeHours} Hrs</td>
                        <td className="p-3 text-right font-medium text-orange-600 dark:text-orange-400">+ ৳{stats.overtimePay}</td>
                      </tr>
+                     
+                     {/* Transactions Integration */}
+                     {stats.totalBonus > 0 && (
+                        <tr className="border-b border-gray-100 dark:border-gray-700">
+                          <td className="p-3 font-medium text-blue-600 dark:text-blue-400">Bonus (+)</td>
+                          <td className="p-3 text-right">-</td>
+                          <td className="p-3 text-right font-medium text-blue-600">+ ৳{stats.totalBonus}</td>
+                        </tr>
+                     )}
+                     {stats.totalOthers > 0 && (
+                        <tr className="border-b border-gray-100 dark:border-gray-700">
+                          <td className="p-3 font-medium text-blue-600 dark:text-blue-400">Others (+)</td>
+                          <td className="p-3 text-right">-</td>
+                          <td className="p-3 text-right font-medium text-blue-600">+ ৳{stats.totalOthers}</td>
+                        </tr>
+                     )}
+                     {stats.totalAdvance > 0 && (
+                        <tr className="border-b border-gray-100 dark:border-gray-700 bg-red-50/30 dark:bg-red-900/5">
+                          <td className="p-3 font-medium text-red-600 dark:text-red-400">Advance Taken (-)</td>
+                          <td className="p-3 text-right">-</td>
+                          <td className="p-3 text-right font-medium text-red-600">- ৳{stats.totalAdvance}</td>
+                        </tr>
+                     )}
+                     {stats.totalSalaryPaid > 0 && (
+                        <tr className="border-b border-gray-100 dark:border-gray-700 bg-red-50/30 dark:bg-red-900/5">
+                          <td className="p-3 font-medium text-red-600 dark:text-red-400">Salary Already Paid (-)</td>
+                          <td className="p-3 text-right">-</td>
+                          <td className="p-3 text-right font-medium text-red-600">- ৳{stats.totalSalaryPaid}</td>
+                        </tr>
+                     )}
                    </tbody>
                  </table>
 
                  <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700">
                     <div className="text-sm text-gray-500">
-                      * System generated slip based on filtered date range.
+                      * System generated slip. Includes all transactions in the selected period.
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-gray-500">Net Payable</p>
@@ -348,7 +384,6 @@ const Accounts: React.FC<AccountsProps> = ({ employees, attendance, lang }) => {
                     </div>
                  </div>
 
-                 {/* Action Buttons - Hidden in PDF via data-html2canvas-ignore */}
                  <div className="mt-8 flex justify-end gap-3 print:hidden" data-html2canvas-ignore>
                     <button 
                       onClick={handleDownloadPDF} 

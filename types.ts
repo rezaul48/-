@@ -20,6 +20,17 @@ export interface AttendanceRecord {
   overtimeHours?: number; // New field for overtime
 }
 
+export type TransactionType = 'Advance' | 'Salary' | 'Bonus' | 'Others';
+
+export interface Transaction {
+  id: string;
+  employeeId: string;
+  amount: number;
+  date: string;
+  type: TransactionType;
+  note: string;
+}
+
 export interface CompanyInfo {
   name: string;
   ownerName: string;
@@ -29,6 +40,7 @@ export interface CompanyInfo {
 export interface AppState {
   employees: Employee[];
   attendance: AttendanceRecord[];
+  transactions: Transaction[];
   company: CompanyInfo;
   darkMode: boolean;
   language: Language;
@@ -41,6 +53,7 @@ export const TRANSLATIONS = {
     reports: 'Reports',
     employees: 'Employees',
     accounts: 'Accounts',
+    transactions: 'Transactions',
     profile: 'Profile',
     aiStudio: 'AI Studio',
     totalEmployees: 'Total Employees',
@@ -99,6 +112,13 @@ export const TRANSLATIONS = {
     paymentPeriod: 'Payment Period',
     photo: 'Photo',
     removePhoto: 'Remove Photo',
+    addTransaction: 'Add Transaction',
+    amount: 'Amount',
+    type: 'Type',
+    note: 'Note',
+    advance: 'Advance',
+    bonus: 'Bonus',
+    others: 'Others',
   },
   bn: {
     dashboard: 'ড্যাশবোর্ড',
@@ -106,6 +126,7 @@ export const TRANSLATIONS = {
     reports: 'রিপোর্ট',
     employees: 'কর্মচারী তালিকা',
     accounts: 'একাউন্ট',
+    transactions: 'লেনদেন',
     profile: 'প্রোফাইল',
     aiStudio: 'এআই স্টুডিও',
     totalEmployees: 'মোট কর্মচারী',
@@ -164,5 +185,12 @@ export const TRANSLATIONS = {
     paymentPeriod: 'পেমেন্ট সময়কাল',
     photo: 'ছবি',
     removePhoto: 'ছবি মুছুন',
+    addTransaction: 'লেনদেন যোগ করুন',
+    amount: 'পরিমাণ',
+    type: 'ধরণ',
+    note: 'নোট',
+    advance: 'অগ্রিম',
+    bonus: 'বোনাস',
+    others: 'অন্যান্য',
   }
 };

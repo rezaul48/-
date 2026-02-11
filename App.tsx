@@ -7,6 +7,7 @@ import {
   Wallet, 
   UserCircle, 
   Wand2,
+  Banknote,
   Menu,
   X
 } from 'lucide-react';
@@ -19,9 +20,10 @@ import EmployeeList from './components/EmployeeList';
 import Accounts from './components/Accounts';
 import Profile from './components/Profile';
 import ImageEditor from './components/ImageEditor';
+import Transactions from './components/Transactions';
 
 // Types and Data
-import { AppState, AttendanceRecord, Employee, TRANSLATIONS, CompanyInfo } from './types';
+import { AppState, AttendanceRecord, Employee, Transaction, TRANSLATIONS, CompanyInfo } from './types';
 
 // Mock Initial Data (Used only if no local storage data exists)
 const INITIAL_EMPLOYEES: Employee[] = [
@@ -42,7 +44,10 @@ const App: React.FC = () => {
     try {
       const savedData = localStorage.getItem(STORAGE_KEY);
       if (savedData) {
-        return JSON.parse(savedData);
+        const parsed = JSON.parse(savedData);
+        // Ensure transactions array exists for old data migrations
+        if (!parsed.transactions) parsed.transactions = [];
+        return parsed;
       }
     } catch (error) {
       console.error("Failed to load data from local storage", error);
@@ -51,6 +56,7 @@ const App: React.FC = () => {
     return {
       employees: INITIAL_EMPLOYEES,
       attendance: [],
+      transactions: [],
       company: {
         name: 'Alpha Tech Solutions',
         ownerName: 'Md. Owner Rahman',
@@ -69,7 +75,6 @@ const App: React.FC = () => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (error) {
       console.error("Failed to save data to local storage", error);
-      // Handle quota exceeded error if images are too large
       if (error instanceof DOMException && error.name === 'QuotaExceededError') {
          alert("Storage full! Please try uploading smaller images or clearing old data.");
       }
@@ -104,13 +109,7 @@ const App: React.FC = () => {
   const handleUpdateEmployee = (originalId: string, updatedEmp: Employee) => {
     setState(prev => {
       const idChanged = originalId !== updatedEmp.id;
-      
-      // Update employees list
-      const updatedEmployees = prev.employees.map(emp => 
-        emp.id === originalId ? updatedEmp : emp
-      );
-
-      // Update attendance records if ID changed
+      const updatedEmployees = prev.employees.map(emp => emp.id === originalId ? updatedEmp : emp);
       let updatedAttendance = prev.attendance;
       if (idChanged) {
         updatedAttendance = prev.attendance.map(record => 
@@ -119,12 +118,7 @@ const App: React.FC = () => {
             : record
         );
       }
-
-      return {
-        ...prev,
-        employees: updatedEmployees,
-        attendance: updatedAttendance
-      };
+      return { ...prev, employees: updatedEmployees, attendance: updatedAttendance };
     });
   };
 
@@ -132,18 +126,26 @@ const App: React.FC = () => {
     setState(prev => ({
       ...prev,
       employees: prev.employees.filter(e => e.id !== id),
-      attendance: prev.attendance.filter(a => a.employeeId !== id) // Cleanup attendance too
+      attendance: prev.attendance.filter(a => a.employeeId !== id),
+      transactions: prev.transactions.filter(t => t.employeeId !== id)
     }));
   };
 
   const handleMarkAttendance = (newRecords: AttendanceRecord[]) => {
     setState(prev => {
-      // Remove existing records for same dates/employees to avoid dupes if re-submitting
       const filtered = prev.attendance.filter(
         old => !newRecords.some(newRec => newRec.employeeId === old.employeeId && newRec.date === old.date)
       );
       return { ...prev, attendance: [...filtered, ...newRecords] };
     });
+  };
+
+  const handleAddTransaction = (tx: Transaction) => {
+    setState(prev => ({ ...prev, transactions: [tx, ...prev.transactions] }));
+  };
+
+  const handleRemoveTransaction = (id: string) => {
+    setState(prev => ({ ...prev, transactions: prev.transactions.filter(t => t.id !== id) }));
   };
 
   // --- NAVIGATION CONFIG ---
@@ -153,6 +155,7 @@ const App: React.FC = () => {
     { id: 'attendance', label: t.attendance, icon: ClipboardCheck },
     { id: 'reports', label: t.reports, icon: FileBarChart },
     { id: 'employees', label: t.employees, icon: Users },
+    { id: 'transactions', label: t.transactions, icon: Banknote },
     { id: 'accounts', label: t.accounts, icon: Wallet },
     { id: 'aiStudio', label: t.aiStudio, icon: Wand2 },
     { id: 'profile', label: t.profile, icon: UserCircle },
@@ -175,8 +178,16 @@ const App: React.FC = () => {
                   onRemoveEmployee={handleRemoveEmployee} 
                   lang={state.language} 
                 />;
+      case 'transactions':
+        return <Transactions 
+                  employees={state.employees} 
+                  transactions={state.transactions} 
+                  onAddTransaction={handleAddTransaction} 
+                  onRemoveTransaction={handleRemoveTransaction} 
+                  lang={state.language} 
+                />;
       case 'accounts':
-        return <Accounts employees={state.employees} attendance={state.attendance} lang={state.language} />;
+        return <Accounts employees={state.employees} attendance={state.attendance} transactions={state.transactions} lang={state.language} />;
       case 'aiStudio':
         return <ImageEditor lang={state.language} />;
       case 'profile':
@@ -201,7 +212,6 @@ const App: React.FC = () => {
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         <div className="h-full flex flex-col">
-          {/* Logo */}
           <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-xl">
@@ -216,7 +226,6 @@ const App: React.FC = () => {
             </button>
           </div>
 
-          {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -242,7 +251,6 @@ const App: React.FC = () => {
             })}
           </nav>
 
-          {/* User Mini Profile */}
           <div className="p-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50">
               <img src={state.company.ownerPhoto} alt="User" className="w-10 h-10 rounded-full object-cover" />
@@ -255,17 +263,16 @@ const App: React.FC = () => {
         </div>
       </aside>
 
-      {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Mobile Header */}
         <header className="lg:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center gap-4">
           <button onClick={() => setMobileMenuOpen(true)} className="text-gray-600 dark:text-gray-300">
             <Menu size={24} />
           </button>
-          <span className="font-bold text-lg text-gray-800 dark:text-white">{t[activeTab as keyof typeof t]}</span>
+          <span className="font-bold text-lg text-gray-800 dark:text-white">
+            {navItems.find(i => i.id === activeTab)?.label || t.dashboard}
+          </span>
         </header>
 
-        {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth">
           <div className="max-w-7xl mx-auto">
              {renderContent()}
